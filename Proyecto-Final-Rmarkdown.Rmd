@@ -70,6 +70,16 @@ empresas_1<-empresas %>%
          Subactividad, Liquidez_corriente, Endeudamiento_Del_activo, Endeudamiento_patrimonial, 
          Endeudamiento_del_activo_fijo, Apalancamiento) %>% view
 
+#crear una tabla resumiendo el num total de empresas por actividad economica y por actividad economica en cada canton. 
+#Debe ser un dt aparte
+
+empresas_segun_AE<-empresas_1 %>% group_by(Actividad_economica,Canton) %>% summarise(NN = n()) %>% 
+  arrange(desc(NN)) %>% view()
+
+#primero nos deshacemos de los NA porque no ayudaran a nuestro analisis y como son aprox 1655 datos los eliminamos
+
+empresas_2<-empresas_1 %>% drop_na() %>% view()
+
 ```
 
 ## Parte 2: Análisis
