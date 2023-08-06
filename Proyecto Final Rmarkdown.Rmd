@@ -130,18 +130,80 @@ Los resultados destacaron que algunas empresas presentan niveles de endeudamient
 
 Es importante señalar que un alto nivel de apalancamiento implica un mayor riesgo financiero para estas empresas, ya que tienen una mayor proporción de deuda en su estructura de capital. Esto significa que cualquier disminución en los ingresos podría afectar su capacidad para cumplir con sus obligaciones financieras. Por otro lado, un apalancamiento más bajo suele ser indicativo de una estructura financiera más estable y menos riesgo en tiempos de volatilidad económica .
 
-## Part 3: Análisis exploratorio de datos 
+## Part 3: Análisis exploratorio de datos
 
 En esta tercera parte del informe, se abordarán tareas específicas enfocadas en el análisis financiero de las empresas estudiadas.
 
-####  Resumen del número de empresas por actividad económica y por actividad económica por cada cantón
+#### Resumen del número de empresas por actividad económica y por actividad económica por cada cantón
 
 Con el objetivo de brindar una visión clara y concisa de la distribución de las empresas por actividad económica y su relación con los cantones, se creó una tabla resumiendo el número total de empresas por actividad económica y por actividad económica por cada cantón.
+
+```{r}
+frecuencia <- empresas_2 %>% count(Actividad_economica)
+frecuencia= as.data.frame(frecuencia)
+
+p3<- as.data.frame(table(empresas_2$Canton, empresas_2$Actividad_economica)) %>% view
+```
 
 #### Indicadores financieros por Status y provincia
 
 Posteriorme se procedio a realizar una gráfica comparativa de los indicadores financieros de liquidez y solvencia en función del "Status" (estado activo o inactivo) y la "Provincia" en la que operan las empresas. Estas visualizaciones permitieron identificar patrones o tendencias relacionadas con la situación financiera de las empresas según su estatus y ubicación geográfica.
 
+```{r}
+#Para liquidez: Tenemos solo liquidez corriente
+
+p4 <- empresas_2 %>% filter(Liquidez_corriente !=  "Inf" & Liquidez_corriente !="-Inf") 
+
+g1<-ggplot(p4, aes(x = Provincia, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por provincia')
+g2<-ggplot(p4, aes(x = Status, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por status')
+
+
+#Para solvencia:Tenemos end. del activo, end. patrimonial, end. activo fijo, apalancamiento
+
+p5<-empresas_2 %>% filter(Endeudamiento_Del_activo !=  "Inf" & Endeudamiento_Del_activo !="-Inf")
+p6<-empresas_2 %>% filter(Endeudamiento_patrimonial !=  "Inf" & Endeudamiento_patrimonial !="-Inf") 
+p7<-empresas_2 %>% filter(Endeudamiento_del_activo_fijo !=  "Inf" & Endeudamiento_del_activo_fijo !="-Inf") 
+p8<-empresas_2 %>% filter(Apalancamiento !=  "Inf" & Apalancamiento !="-Inf") 
+
+
+g3<-ggplot(p5, aes(x = Provincia, fill= Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo en provincias')
+g4<-ggplot(p5, aes(x = Status, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por status')
+g5<-ggplot(p6, aes(x = Provincia, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por provincia')
+g6<-ggplot(p6, aes(x = Status, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por status')
+g7<-ggplot(p7, aes(x = Provincia, fill = Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por provincia')
+g8<-ggplot(p7, aes(x = Status,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por status')
+g9<-ggplot(p8, aes(x = Provincia, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por provincia')
+g10<-ggplot(p8, aes(x = Status, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por status')
+
+
+
+```
+
 #### Indicadores financieros por tipo de empresa
 
 Finalmente, se realizó una gráfica comparativa de los indicadores financieros de liquidez y solvencia según el "Tipo de empresa". Esta visualización permitió entender las diferencias entre los distintos tipos de empresas presentes en el estudio y su salud financiera relativa.
+
+```{r}
+
+#Para liquidez: Tenemos solo liquidez corriente
+g11<-ggplot(p4, aes(x = Tipo_de_empresa, y = Liquidez_corriente)) +geom_point()+labs(title='Liquidez por tipo de empresa')
+
+#Para solvencia:Tenemos end. del activo, end. patrimonial, end. activo fijo, apalancamiento
+
+g12<-ggplot(p5, aes(x = Tipo_de_empresa, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por Tipo de empresa')
+g13<-ggplot(p6, aes(x = Tipo_de_empresa, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por Tipo de empresa')
+g14<-ggplot(p7, aes(x = Tipo_de_empresa,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por Tipo de empresa')
+g15<-ggplot(p8, aes(x = Tipo_de_empresa, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por Tipo de empresa')
+
+
+```
+
+## Part 4: Conclusiones
+
+En esta sección, se resumirán los hallazgos clave del análisis financiero y se ofrecerán conclusiones basadas en los resultados presentados en la sección de Análisis. Se destacarán las principales tendencias, diferencias y riesgos identificados, y se discutirán las implicaciones generales para la toma de decisiones financieras en diferentes tipos de empresas.
+
+En este informe, realizamos un análisis financiero de diferentes empresas utilizando los datos proporcionados en el archivo balance_2014.xlsx. Creamos un tibble llamado "empresas" con las variables relevantes y respondimos a las preguntas planteadas.
+
+Observamos que las empresas de diferentes actividades económicas están distribuidas de manera desigual en los distintos cantones. Además, encontramos diferencias significativas en los indicadores financieros de liquidez y solvencia entre las empresas con diferentes situaciones (status) y provincias. Asimismo, pudimos identificar tendencias y variaciones en los indicadores financieros al comparar los diferentes tipos de empresas.
+
+Estos resultados nos permiten obtener una visión más completa y detallada del estado financiero de las empresas analizadas, lo que puede ser de gran utilidad para la toma de decisiones financieras y estratégicas en el futuro.
