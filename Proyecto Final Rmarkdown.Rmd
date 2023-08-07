@@ -73,8 +73,11 @@ empresas_1<-empresas %>%
 #crear una tabla resumiendo el num total de empresas por actividad economica y por actividad economica en cada canton. 
 #Debe ser un dt aparte
 
-empresas_segun_AE<-empresas_1 %>% group_by(Actividad_economica,Canton) %>% summarise(NN = n()) %>% 
-  arrange(desc(NN)) %>% view()
+frecuencia <- empresas_2 %>% count(Actividad_economica)
+frecuencia= as.data.frame(frecuencia)
+
+p3<- as.data.frame(table(empresas_2$Canton, empresas_2$Actividad_economica)) %>% view
+
 
 #primero nos deshacemos de los NA porque no ayudaran a nuestro analisis y como son aprox 1655 datos los eliminamos
 
