@@ -55,8 +55,7 @@ Se generó un tibble llamado 'empresas' utilizando los datos del archivo 'balanc
 empresas<-read.xlsx('Proyecto/balances_2014.xlsx',sheet='v2014_activo1')
 
 #Cambiamos los nombres de las variables
-empresas<-empresas %>% rename(Empresa=nombre_cia,Status=situacion,Tipo_de_empresa=tipo,Pais=pais,Provincia=provincia
-                              ,Canton=canton,Ciudad=ciudad,Actividad_economica=ciiu4_nivel1,Subactividad=ciiu4_nivel6)
+empresas<-empresas %>% rename(Empresa=nombre_cia,Status=situacion,Tipo_de_empresa=tipo,Pais=pais,Provincia=provincia,Canton=canton,Ciudad=ciudad,Actividad_economica=ciiu4_nivel1,Subactividad=ciiu4_nivel6)
 
 #Cambiamos a tibble
 empresas<-tibble::as_tibble(empresas)
@@ -66,23 +65,19 @@ glimpse(empresas)
 empresas_1<-empresas %>% 
   mutate(Liquidez_corriente=v345/v539, Endeudamiento_Del_activo=v599/v499, Endeudamiento_patrimonial=v599/v698, 
          Endeudamiento_del_activo_fijo=v698/v498,Apalancamiento=v499/v698) %>% 
-  select(ruc,Empresa,Status,Tipo_de_empresa, Pais, Provincia, Canton, Ciudad, Actividad_economica,
-         Subactividad, Liquidez_corriente, Endeudamiento_Del_activo, Endeudamiento_patrimonial, 
-         Endeudamiento_del_activo_fijo, Apalancamiento) %>% view
+  select(ruc,Empresa,Status,Tipo_de_empresa, Pais, Provincia, Canton, Ciudad, Actividad_economica,Subactividad, Liquidez_corriente, Endeudamiento_Del_activo, Endeudamiento_patrimonial, Endeudamiento_del_activo_fijo, Apalancamiento) %>% view
 
 #crear una tabla resumiendo el num total de empresas por actividad economica y por actividad economica en cada canton. 
 #Debe ser un dt aparte
 
-frecuencia <- empresas_2 %>% count(Actividad_economica)
-frecuencia= as.data.frame(frecuencia)
-
-p3<- as.data.frame(table(empresas_2$Canton, empresas_2$Actividad_economica)) %>% view
+empresas_segun_AE<-empresas_1 %>% group_by(Actividad_economica,Canton) %>% summarise(NN = n()) %>% 
+  arrange(desc(NN)) %>% view()
 
 
 #primero nos deshacemos de los NA porque no ayudaran a nuestro analisis y como son aprox 1655 datos los eliminamos
 
-empresas_2<-empresas_1 %>% drop_na() %>% view()
-
+empresas_2<-empresas_1 %>% drop_na() %>% view() 
+  
 ```
 
 ## Parte 2: Análisis
@@ -106,6 +101,7 @@ p1 <- p1 %>%
 
 p12 <- aggregate(Endeudamiento_del_activo_fijo ~ tamanio, data = p1, FUN = sum) %>% view
 
+print(p12)
 ```
 
 El análisis de la tabla de resultados reveló que el endeudamiento del activo fijo fue significativamente mayor en empresas clasificadas como "MICRO" y "PEQUEÑA" en comparación con aquellas catalogadas como "GRANDE".
@@ -132,6 +128,7 @@ p2$trabajadores <- ifelse(p2$trab_direc > 62 & p2$trab_admin >= 100 & p2$trab_ad
 
 p22 <- aggregate(Liquidez_corriente ~ trabajadores+Tipo_de_empresa.y, data = p2, FUN = sum) %>%  view
 
+print(p22)
 ```
 
 Se encontró que las empresas con más de 60 trabajadores directos y que satisfacen el rango de 100 a 800 trabajadores administrativos mostraron distintos niveles de liquidez corriente, con valores que oscilaron entre 1.172458e+01 y 5.198283e+00. Por otro lado, las empresas que no cumplían con estos requisitos también exhibieron variaciones en sus niveles de liquidez corriente, con valores diferentes para cada tipo de empresa, como ANÓNIMA, ANÓNIMA EN PREDIOS RÚSTICOS, ANÓNIMA MULTINACIONAL ANDINA, ASOCIACIÓN O CONSORCIO, ECONOMÍA MIXTA, RESPONSABILIDAD LIMITADA y SUCURSAL EXTRANJERA.
@@ -151,6 +148,8 @@ top10_apalancamiento <- empresas_2 %>%
   arrange(Apalancamiento)
   
 head(top10_apalancamiento,10) %>% view
+
+print(top10_apalancamiento)
 ```
 
 La investigación realizada reveló una amplia diversidad en los indicadores financieros de estas compañías al analizar distintos parámetros, como la liquidez corriente, el endeudamiento del activo, el endeudamiento patrimonial, el endeudamiento del activo fijo y el apalancamiento.
@@ -172,19 +171,37 @@ frecuencia <- empresas_2 %>% count(Actividad_economica)
 frecuencia= as.data.frame(frecuencia)
 
 p3<- as.data.frame(table(empresas_2$Canton, empresas_2$Actividad_economica)) %>% view
+
+head(p3,6)
 ```
 
 #### Indicadores financieros por Status y provincia
 
 Posteriorme se procedio a realizar una gráfica comparativa de los indicadores financieros de liquidez y solvencia en función del "Status" (estado activo o inactivo) y la "Provincia" en la que operan las empresas. Estas visualizaciones permitieron identificar patrones o tendencias relacionadas con la situación financiera de las empresas según su estatus y ubicación geográfica.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 #Para liquidez: Tenemos solo liquidez corriente
 
 p4 <- empresas_2 %>% filter(Liquidez_corriente !=  "Inf" & Liquidez_corriente !="-Inf") 
 
-g1<-ggplot(p4, aes(x = Provincia, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por provincia')
-g2<-ggplot(p4, aes(x = Status, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por status')
+ggplot(p4, aes(x = Provincia, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por provincia')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p4, aes(x = Status, fill = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por status')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
 
 
 #Para solvencia:Tenemos end. del activo, end. patrimonial, end. activo fijo, apalancamiento
@@ -195,14 +212,82 @@ p7<-empresas_2 %>% filter(Endeudamiento_del_activo_fijo !=  "Inf" & Endeudamient
 p8<-empresas_2 %>% filter(Apalancamiento !=  "Inf" & Apalancamiento !="-Inf") 
 
 
-g3<-ggplot(p5, aes(x = Provincia, fill= Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo en provincias')
-g4<-ggplot(p5, aes(x = Status, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por status')
-g5<-ggplot(p6, aes(x = Provincia, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por provincia')
-g6<-ggplot(p6, aes(x = Status, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por status')
-g7<-ggplot(p7, aes(x = Provincia, fill = Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por provincia')
-g8<-ggplot(p7, aes(x = Status,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por status')
-g9<-ggplot(p8, aes(x = Provincia, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por provincia')
-g10<-ggplot(p8, aes(x = Status, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por status')
+ggplot(p5, aes(x = Provincia, fill= Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo en provincias')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p5, aes(x = Status, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por status')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p6, aes(x = Provincia, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por provincia')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p6, aes(x = Status, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por status')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+ggplot(p7, aes(x = Provincia, fill = Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por provincia')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+ggplot(p7, aes(x = Status,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por status')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p8, aes(x = Provincia, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por provincia')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p8, aes(x = Status, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por status')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
 
 
 
@@ -212,17 +297,57 @@ g10<-ggplot(p8, aes(x = Status, fill = Apalancamiento)) +geom_bar()+labs(title='
 
 Finalmente, se realizó una gráfica comparativa de los indicadores financieros de liquidez y solvencia según el "Tipo de empresa". Esta visualización permitió entender las diferencias entre los distintos tipos de empresas presentes en el estudio y su salud financiera relativa.
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 
 #Para liquidez: Tenemos solo liquidez corriente
-g11<-ggplot(p4, aes(x = Tipo_de_empresa, y = Liquidez_corriente)) +geom_point()+labs(title='Liquidez por tipo de empresa')
+ggplot(p4, aes(x = Tipo_de_empresa, y = Liquidez_corriente)) +geom_bar()+labs(title='Liquidez por tipo de empresa')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
 
 #Para solvencia:Tenemos end. del activo, end. patrimonial, end. activo fijo, apalancamiento
 
-g12<-ggplot(p5, aes(x = Tipo_de_empresa, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por Tipo de empresa')
-g13<-ggplot(p6, aes(x = Tipo_de_empresa, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por Tipo de empresa')
-g14<-ggplot(p7, aes(x = Tipo_de_empresa,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por Tipo de empresa')
-g15<-ggplot(p8, aes(x = Tipo_de_empresa, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por Tipo de empresa')
+ggplot(p5, aes(x = Tipo_de_empresa, fill = Endeudamiento_Del_activo)) +geom_bar()+labs(title='Endeudamiento del activo por Tipo de empresa')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+ggplot(p6, aes(x = Tipo_de_empresa, fill = Endeudamiento_patrimonial)) +geom_bar()+labs(title='Endeudamiento patrimonial por Tipo de empresa')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p7, aes(x = Tipo_de_empresa,  fill= Endeudamiento_del_activo_fijo)) +geom_bar()+labs(title='Endeudamiento del activo fijo por Tipo de empresa')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
+
+
+ggplot(p8, aes(x = Tipo_de_empresa, fill = Apalancamiento)) +geom_bar()+labs(title='Apalancamiento por Tipo de empresa')+
+  theme(legend.title = element_text(size = 7),
+      legend.text=element_text(size = 5),legend.position = "bottom",
+      legend.key.size = unit(0.4, "cm"),
+      axis.text.x = element_text(size=5,angle = 45, hjust = 1))+
+  guides(
+    fill = guide_legend(ncol = 3)
+  )
 
 
 ```
